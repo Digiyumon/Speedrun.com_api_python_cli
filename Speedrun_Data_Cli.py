@@ -42,7 +42,7 @@ def get_game_id(game_data):
 def dump_json_to_file(data, game_name):
     with open(f"{game_name}_data.json", "w") as f:
         json.dump(data, f, indent=4)
-    print("JSON data saved to run_data.json")
+    print("JSON data saved to file!")
 
 # prompts the user for what category they would like to have the data about
 def get_game_category_data(game_id):
@@ -68,7 +68,10 @@ def get_category_leaderboard(game_id, game_category, variable_info):
     return leaderboard_data.json()["data"]
 
 
-
+def get_number_of_variables(category_id):
+    variables = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
+    variables = variables.json()["data"]
+    return len(variables)
 
 #Arguments: category id
 #if the user selects yes, then it returns a dictionary with 2 things:
@@ -76,22 +79,17 @@ def get_category_leaderboard(game_id, game_category, variable_info):
 # and variable_id, which is needed to know what variables we are using i think? idk what it does but i know we need it for the leaderboard data
 
 #TODO: IT IS ENTIRELY POSSIBLE THAT THERE IS MORE THAN ONE VARIABLE IN A GAME SO LOOK INTO THAT!!!
-#TODO: IT IS ALSO POSSIBLE THAT NO VARIABLES EXIST FOR THE GAME ! SO CHECK IF THERE ARE ANY BEFORE ASKING !
 def get_variable_info(category_id):
     variable_info = {}
     variable_choice = 0
     variable_labels = []
-    response = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
-    response_data = response.json()
-    if not response_data["data"]:
-        return
     while True:
         arr = []
         choice = input("Is there a certain variable that you want to get from this category? (y/n) \n")
         if(choice.lower() == 'y'):
             variables = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
             variables = variables.json()["data"]
-            variable_values = variables[0]['values']['values']
+            variable_values = variables[i]['values']['values']
             for i, variable in enumerate(variable_values, start=1):
                 print(f"{i}: {variable_values[variable]['label']}")
                 arr.append(i)
@@ -187,7 +185,7 @@ def check_different_times(leaderboard_data):
 
 def choose_time_fields(times_to_ask):
     if(times_to_ask == "neither"):
-        return "Primary"
+        return ["Primary"]
     options = [("Primary_Time", "Primary")]
     if(times_to_ask == "realtime"):
         options.append(("RealTime_Time", "RealTime"))
@@ -245,8 +243,6 @@ def print_progress_bar(current, total, length=40):
     bar = '█' * filled + '-' * (length - filled)
     print(f"\rFetching player names... |{bar}| {int(percent * 100)}% ({current}/{total})", end='', flush=True)
 
-#TODO: a player could not have an id, and instead have it as a name
-#for example: look at player 4 in the super meat boy leaderboard. it has 'name' instead of 'id'
 def player_id_to_player_name(player_id, total_players,current_player):
     global notify_user_of_api_bottleneck
     # Simulate a loading dot animation
@@ -277,8 +273,12 @@ def create_csv(leaderboard_data, game_name, csv_fields):
         times_in_csv = choose_time_fields(times_to_ask)
         #print(times_in_csv)
         fieldnames.remove("time")
-    for time in times_in_csv:
-        fieldnames.append(time)
+    print(repr(times_in_csv))
+    if (len(times_in_csv) != 1):
+        for time in times_in_csv:
+            fieldnames.append(time)
+    else:
+        fieldnames.append(times_in_csv[0])
 
     runs = leaderboard_data["runs"]
 
@@ -346,7 +346,11 @@ def main():
     game_category_data = get_game_category_data(game_id)
     category_id = get_category_id(game_category_data)
     #if no variable id is chosen, then it just returns as None
-    variable_info = get_variable_info(category_id)
+    number_of_variables = get_number_of_variables(category_id)
+    if(number_of_variables >= 1):
+        variable_info = get_variable_info(category_id)
+    else:
+        variable_info = None
     category_leaderboard_data = get_category_leaderboard(game_id, category_id, variable_info)
     extract_leaderboard_to_csv_or_json(category_leaderboard_data, game_name)
 
