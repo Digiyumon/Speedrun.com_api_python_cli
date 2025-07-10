@@ -1,5 +1,9 @@
 import json
 import requests
+import csv
+import time
+
+notify_user_of_api_bottleneck = False
 
 # TODO maybe later you can make a gui for this
 # but for now you just want to search for a game, get the category that you want, and then get the leaderboard for that category. nothing crazy right now. 
@@ -64,15 +68,23 @@ def get_category_leaderboard(game_id, game_category, variable_info):
     return leaderboard_data.json()["data"]
 
 
+
+
 #Arguments: category id
 #if the user selects yes, then it returns a dictionary with 2 things:
 # variable_value which is the specific variable that we want for our leaderboard, such as "new game" or "new game+"
 # and variable_id, which is needed to know what variables we are using i think? idk what it does but i know we need it for the leaderboard data
 
+#TODO: IT IS ENTIRELY POSSIBLE THAT THERE IS MORE THAN ONE VARIABLE IN A GAME SO LOOK INTO THAT!!!
+#TODO: IT IS ALSO POSSIBLE THAT NO VARIABLES EXIST FOR THE GAME ! SO CHECK IF THERE ARE ANY BEFORE ASKING !
 def get_variable_info(category_id):
     variable_info = {}
     variable_choice = 0
     variable_labels = []
+    response = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
+    response_data = response.json()
+    if not response_data["data"]:
+        return
     while True:
         arr = []
         choice = input("Is there a certain variable that you want to get from this category? (y/n) \n")
@@ -214,23 +226,93 @@ def choose_time_fields(times_to_ask):
     return [options[i-1][1] for i in sorted(selected)]
 
 
+#if the user selects that they want consoles to be added to their csv file, then this function will be used 
+#it takes the console string from the JSON file, and if it isn't in existing consoles then it will be added
+#otherwise, the function won't be called in the first place. 
+def name_consoles(console_id, existing_consoles):
+    if(console_id in existing_consoles):
+        return existing_consoles[console_id]
+    else:
+        console_data = requests.get(f"https://www.speedrun.com/api/v1/platforms/{console_id}")
+        console_data = console_data.json()
+        console_name = console_data["data"]["name"]
+        existing_consoles[id] = console_name
+        return console_name
+
+def print_progress_bar(current, total, length=40):
+    percent = current / total
+    filled = int(length * percent)
+    bar = '█' * filled + '-' * (length - filled)
+    print(f"\rFetching player names... |{bar}| {int(percent * 100)}% ({current}/{total})", end='', flush=True)
+
+#TODO: a player could not have an id, and instead have it as a name
+#for example: look at player 4 in the super meat boy leaderboard. it has 'name' instead of 'id'
+def player_id_to_player_name(player_id, total_players,current_player):
+    global notify_user_of_api_bottleneck
+    # Simulate a loading dot animation
+    user_data = requests.get(f"https://www.speedrun.com/api/v1/users/{player_id}")
+    if(total_players > 60):
+        if(notify_user_of_api_bottleneck == False):
+            print("Fetching player names — this may take a moment due to API limits...\n")
+            notify_user_of_api_bottleneck = True
+        print_progress_bar(current_player, total_players)
+        time.sleep(0.5)
+    user_data = user_data.json()
+    user_names = user_data["data"]["names"]
+    #names_data = user["names"]
+    player_name = user_names["international"]
+    return player_name
+
+def get_highest_place(leaderboard_data):
+    places = [entry["place"] for entry in leaderboard_data["runs"]]
+    return max(places)
+
 def create_csv(leaderboard_data, game_name, csv_fields):
+    fieldnames = csv_fields
+    if ('time' in fieldnames):
+        times_to_ask = check_different_times(leaderboard_data)
+        if(times_to_ask != 'neither'):
+            print("What times would you like to have columns of?")
+        #times in csv = ['Primary']
+        times_in_csv = choose_time_fields(times_to_ask)
+        #print(times_in_csv)
+        fieldnames.remove("time")
+    for time in times_in_csv:
+        fieldnames.append(time)
+
+    runs = leaderboard_data["runs"]
+
+    total_players = get_highest_place(leaderboard_data)
+    current_player = 0
     with open(f"{game_name}_leaderboard.csv", "w", newline="", encoding="utf-8") as csvfile:
-        fieldnames = csv_fields
-        #TODO KAY SO, for the times, sometimes games have different times, but other times they don't 
-        #so its gonna be more work, but its gonna pay off. 
-        # before we ask the user what times they want, we need to check if there are time differences at all
-        # because we don't want to ask what time they want, if there is only 1 time recording for the game. 
-        # SA2 has 2 different times, while KH2 only has a single time. so yeah
-        if ('time' in fieldnames):
-            times_to_ask = check_different_times(leaderboard_data)
-            if(times_to_ask != 'neither'):
-                print("What times would you like to have columns of?")
-            #times in csv = ['Primary']
-            times_in_csv = choose_time_fields(times_to_ask)
-            print(times_in_csv)
-        pass
-    pass
+            existing_platforms = {}
+            writing_dictionary = {}
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for i, run_entry in enumerate(runs, start=1):
+                run = run_entry["run"]
+                if("Primary" in fieldnames):
+                    writing_dictionary["Primary"] = run["times"]["primary_t"]
+                if("RealTime" in fieldnames):
+                    writing_dictionary["RealTime"] = run["times"]["realtime_t"]
+                if("InGame" in fieldnames):
+                    writing_dictionary["InGame"] = run["times"]["ingame_t"]
+                if("player" in fieldnames):
+                    if "id" in run["players"][0]:
+                        player_id = run["players"][0]["id"]
+                        writing_dictionary["player"] = player_id_to_player_name(player_id, total_players, current_player)
+                    else:
+                        writing_dictionary["player"] = run["players"][0]["name"]
+                    current_player+=1
+                if("date" in fieldnames):
+                    writing_dictionary["date"] = run["date"]
+                if("platform" in fieldnames):
+                    writing_dictionary["platform"] = name_consoles(run["system"]["platform"], existing_platforms)
+                    if (run["system"]["emulated"] == True):
+                        writing_dictionary["platform"] = f"emulated_{writing_dictionary["platform"]}"
+                writer.writerow(writing_dictionary)
+            print("CSV file has been created!")
+            pass
 
 def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name):
     answer = 0
