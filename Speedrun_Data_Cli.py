@@ -8,18 +8,14 @@ notify_user_of_api_bottleneck = False
 # TODO maybe later you can make a gui for this
 # but for now you just want to search for a game, get the category that you want, and then get the leaderboard for that category. nothing crazy right now. 
 
-# Prompts the user and asks what game they want to search for
 def prompt_user():
     name = input("What game do you want to search for? ")
     return name
 
-# Searches the api for the name provided from prompt_user()
 def search_game(name):
     r = requests.get(f"https://www.speedrun.com/api/v1/games?name={name}")
     return r.json()["data"]
 
-
-# After getting the json with all the games, we want to specify which game from the list we want data of
 def get_game(game_data):
     for i, game in enumerate(game_data, start=1):
         print(f"{i}: {game['names']['international']}")
@@ -36,15 +32,11 @@ def get_game_id(game_data):
     game_id = game_data["id"]
     return game_id
 
-# if we want the json of anything, this will make that for us
-# parameters: data we want a json file of, and the name of the source
-# returns: nothing
 def dump_json_to_file(data, game_name):
     with open(f"{game_name}_data.json", "w") as f:
         json.dump(data, f, indent=4)
     print("JSON data saved to file!")
 
-# prompts the user for what category they would like to have the data about
 def get_game_category_data(game_id):
     category_data = requests.get(f"https://www.speedrun.com/api/v1/games/{game_id}/categories")
     category_data = category_data.json()["data"]
@@ -53,59 +45,59 @@ def get_game_category_data(game_id):
     category_choice = int(input("Which category would you like to focus on? "))
     return category_data[category_choice-1]
 
-# Just returns the category id from the chosen category data
 def get_category_id(category_data):
     return category_data['id']
 
-# returns the leaderboard data with the game and category that has been chosen.
 def get_category_leaderboard(game_id, game_category, variable_info):
     if(variable_info == None):
         leaderboard_data = requests.get(f"https://www.speedrun.com/api/v1/leaderboards/{game_id}/category/{game_category}")
     else:
-        variable_value = variable_info['variable_value']
-        variable_id = variable_info['variable_id']
-        leaderboard_data = requests.get(f"https://www.speedrun.com/api/v1/leaderboards/{game_id}/category/{game_category}?var-{variable_id}={variable_value}")
+        for i, variable in enumerate(variable_info):
+            variable_value = variable_info[i]['variable_value']
+            variable_id = variable_info[i]['variable_id']
+            if(i == 0):
+                request_string: str = f"https://www.speedrun.com/api/v1/leaderboards/{game_id}/category/{game_category}?var-{variable_id}={variable_value}"
+            else:
+                request_string += f"&var-{variable_id}={variable_value}"
+        leaderboard_data = requests.get(request_string)
     return leaderboard_data.json()["data"]
-
 
 def get_number_of_variables(category_id):
     variables = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
     variables = variables.json()["data"]
     return len(variables)
 
-#Arguments: category id
-#if the user selects yes, then it returns a dictionary with 2 things:
-# variable_value which is the specific variable that we want for our leaderboard, such as "new game" or "new game+"
-# and variable_id, which is needed to know what variables we are using i think? idk what it does but i know we need it for the leaderboard data
-
-#TODO: IT IS ENTIRELY POSSIBLE THAT THERE IS MORE THAN ONE VARIABLE IN A GAME SO LOOK INTO THAT!!!
-def get_variable_info(category_id):
-    variable_info = {}
-    variable_choice = 0
-    variable_labels = []
+def does_user_want_variables():
     while True:
-        arr = []
         choice = input("Is there a certain variable that you want to get from this category? (y/n) \n")
         if(choice.lower() == 'y'):
-            variables = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
-            variables = variables.json()["data"]
-            variable_values = variables[i]['values']['values']
-            for i, variable in enumerate(variable_values, start=1):
-                print(f"{i}: {variable_values[variable]['label']}")
-                arr.append(i)
-                variable_labels.append(variable)
-            while variable_choice not in arr:
-                variable_choice = int(input("Which variable would you like to use?"))
-                if(variable_choice not in arr):
-                    print("Just pick one of the valid options please...")
-            variable_label_choice = variable_labels[variable_choice-1]
-            variable_info["variable_value"] = variable_label_choice
-            variable_info["variable_id"] = variables[0]['id']
-            return variable_info
+            return True
         elif(choice.lower() == 'n'):
-            return
-        else:
-            print("Please select a valid response...")
+            return False
+        else: return False
+
+def get_variable_info(category_id, total_number_of_variables):
+    variables = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
+    variables = variables.json()["data"]
+    variable_info = {}
+    for i in range(total_number_of_variables):
+        variable_choice = 0
+        variable_labels = []
+        variable_info[i] = {}
+        arr = []
+        variable_values = variables[i]['values']['values']
+        for idx, variable in enumerate(variable_values, start=1):
+            print(f"{idx}: {variable_values[variable]['label']}")
+            arr.append(idx)
+            variable_labels.append(variable)
+        while variable_choice not in arr:
+            variable_choice = int(input("Which variable would you like to use?"))
+            if(variable_choice not in arr):
+                print("Just pick one of the valid options please...")
+        variable_label_choice = variable_labels[variable_choice-1]
+        variable_info[i]["variable_value"] = variable_label_choice
+        variable_info[i]["variable_id"] = variables[i]['id']
+    return variable_info
 
 
 def choose_csv_fields():
@@ -115,22 +107,18 @@ def choose_csv_fields():
         ("Date", "date"),
         ("Platform", "platform")
     ]
-    
     selected = set()
-
     while True:
         print("\nWhat info do you want in your CSV?")
         for i, (label, _) in enumerate(options, start=1):
             mark = "[x]" if i in selected else "[ ]"
             print(f"{i}. {label} {mark}")
         print(f"{len(options)+1}. Make CSV")
-
         try:
             choice = int(input("Choose an option: "))
         except ValueError:
             print("Please enter a valid number.")
             continue
-
         if choice == len(options) + 1:
             break
         elif 1 <= choice <= len(options):
@@ -140,8 +128,6 @@ def choose_csv_fields():
                 selected.add(choice)
         else:
             print("Invalid choice.")
-
-    # Return only the keys for the selected fields
     return [options[i-1][1] for i in sorted(selected)]
 
 def check_different_times(leaderboard_data):
@@ -194,22 +180,18 @@ def choose_time_fields(times_to_ask):
     elif(times_to_ask ==  "both"):
         options.append(("RealTime_Time", "RealTime"))
         options.append(("InGame_Time", "InGame"))
-    
     selected = set()
-
     while True:
         print("\nWhat info do you want in your CSV?")
         for i, (label, _) in enumerate(options, start=1):
             mark = "[x]" if i in selected else "[ ]"
             print(f"{i}. {label} {mark}")
         print(f"{len(options)+1}. Make CSV")
-
         try:
             choice = int(input("Choose an option: "))
         except ValueError:
             print("Please enter a valid number.")
             continue
-
         if choice == len(options) + 1:
             break
         elif 1 <= choice <= len(options):
@@ -219,14 +201,8 @@ def choose_time_fields(times_to_ask):
                 selected.add(choice)
         else:
             print("Invalid choice.")
-
-    # Return only the keys for the selected fields
     return [options[i-1][1] for i in sorted(selected)]
 
-
-#if the user selects that they want consoles to be added to their csv file, then this function will be used 
-#it takes the console string from the JSON file, and if it isn't in existing consoles then it will be added
-#otherwise, the function won't be called in the first place. 
 def name_consoles(console_id, existing_consoles):
     if(console_id in existing_consoles):
         return existing_consoles[console_id]
@@ -255,7 +231,6 @@ def player_id_to_player_name(player_id, total_players,current_player):
         time.sleep(0.5)
     user_data = user_data.json()
     user_names = user_data["data"]["names"]
-    #names_data = user["names"]
     player_name = user_names["international"]
     return player_name
 
@@ -269,9 +244,7 @@ def create_csv(leaderboard_data, game_name, csv_fields):
         times_to_ask = check_different_times(leaderboard_data)
         if(times_to_ask != 'neither'):
             print("What times would you like to have columns of?")
-        #times in csv = ['Primary']
         times_in_csv = choose_time_fields(times_to_ask)
-        #print(times_in_csv)
         fieldnames.remove("time")
     print(repr(times_in_csv))
     if (len(times_in_csv) != 1):
@@ -335,6 +308,7 @@ def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name):
 
 
 def main():
+    variable_info = []
     game_name = prompt_user()
     found_games = search_game(game_name)
     while not found_games:
@@ -348,7 +322,10 @@ def main():
     #if no variable id is chosen, then it just returns as None
     number_of_variables = get_number_of_variables(category_id)
     if(number_of_variables >= 1):
-        variable_info = get_variable_info(category_id)
+        variable_choice = does_user_want_variables()
+        if(variable_choice):
+            variable_info = get_variable_info(category_id, number_of_variables)
+        else: variable_info = None
     else:
         variable_info = None
     category_leaderboard_data = get_category_leaderboard(game_id, category_id, variable_info)
