@@ -5,9 +5,6 @@ import time
 
 notify_user_of_api_bottleneck = False
 
-# TODO maybe later you can make a gui for this
-# but for now you just want to search for a game, get the category that you want, and then get the leaderboard for that category. nothing crazy right now. 
-
 def prompt_user():
     name = input("What game do you want to search for? ")
     return name
@@ -362,7 +359,6 @@ def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name, category_nam
         create_csv(leaderboard_data, game_name, csv_fields,category_name)
         pass
 
-#TODO: whenever te user picks the name for the game, have the file that's saved, but the actual name of the game, not what they typed in to look up the game.
 def main():
     variable_info = []
     game_name = prompt_user()
