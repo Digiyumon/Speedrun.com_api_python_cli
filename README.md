@@ -32,18 +32,18 @@ OR
 
 📄 Step 3: Create requirements.txt
 
-If it’s not already included, create a new text file called requirements.txt in the project folder and add this line:
+    If it’s not already included, create a new text file called requirements.txt in the project folder and add this line:
 
-requests
+    requests
 
-Save the file.
+    Save the file.
 🔧 Step 4: Install Required Packages
 
-In your terminal or command prompt, navigate to the project folder and run:
-
-pip install -r requirements.txt
-
-This installs the requests library used for API access.
+    In your terminal or command prompt, navigate to the project folder and run:
+    
+    pip install -r requirements.txt
+    
+    This installs the requests library used for API access.
 🏁 Step 5: Run the Program
 
 Once everything’s installed, run:
