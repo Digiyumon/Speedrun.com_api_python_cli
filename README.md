@@ -14,7 +14,7 @@ This script lets you quickly search for a game on speedrun.com, select a categor
 If you don't have Python 3 installed, download it here:
 👉 https://www.python.org/downloads/
 
-    Make sure to check “Add Python to PATH” during installation!
+Make sure to check “Add Python to PATH” during installation!
 
 📁 Step 2: Download the Project
 
