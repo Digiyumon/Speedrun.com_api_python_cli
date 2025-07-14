@@ -30,21 +30,14 @@ OR
     git clone https://github.com/yourusername/speedrun-data-exporter.git
     cd speedrun-data-exporter
 
-📄 Step 3: Create requirements.txt
+🔧 Step 3: Install Required Packages
 
-    If it’s not already included, create a new text file called requirements.txt in the project folder and add this line:
-
-    requests
-
-    Save the file.
-🔧 Step 4: Install Required Packages
-
-    In your terminal or command prompt, navigate to the project folder and run:
+In your terminal or command prompt, navigate to the project folder and run:
     
     pip install -r requirements.txt
     
-    This installs the requests library used for API access.
-🏁 Step 5: Run the Program
+This installs the requests library used for API access.
+🏁 Step 4: Run the Program
 
 Once everything’s installed, run:
 
@@ -52,13 +45,13 @@ python Speedrun_Data_Cli.py
 
 Follow the on-screen prompts to:
 
-    Search for a game
+Search for a game
 
-    Select categories and subcategories
+Select categories and subcategories
 
-    Choose what data to export
+Choose what data to export
 
-    Output to a .csv or .json file
+Output to a .csv or .json file
     
 ## Usage/Examples
 
