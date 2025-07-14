@@ -1,6 +1,7 @@
 🕹️ Speedrun.com Leaderboard Export Tool
 
 A Python command-line application that lets you search for any game on Speedrun.com, view its categories, and export full leaderboard data to CSV or JSON — all without manually touching the API.
+
 🚀 Features
 
     🔍 Search for games and select specific categories
