@@ -17,23 +17,32 @@ def search_game(name):
     return r.json()["data"]
 
 def get_game(game_data):
-    for i, game in enumerate(game_data, start=1):
-        print(f"{i}: {game['names']['international']}")
     while True:
+        for i, game in enumerate(game_data, start=1):
+            print(f"{i}: {game['names']['international']}")
+        if(len(game_data) != 0):
+            print(f"{len(game_data) + 1}: None of these — search again")
+
         try:
             choice = int(input("Which game do you want info for? "))
             if 1 <= choice <= len(game_data):
                 break
+            elif choice == len(game_data) + 1:
+                new_name = prompt_user()
+                game_data = search_game(new_name)
             else:
                 print("Please enter a number from the list.")
         except ValueError:
             print("That's not a valid number. Try again.")
+
     json_answer = input("Would you like a copy of the json data to a file? (y/n) ")
     if json_answer.lower() == 'y':
         dump_json_to_file(game_data[choice-1], game_data[choice-1]['names']['international'])
-    else:
-        pass
+
     return game_data[choice - 1]
+
+def get_international_game_name(game_data):
+    return game_data["names"]["international"]
 
 # this just returns the id of the game that we plan on using
 def get_game_id(game_data):
@@ -312,8 +321,6 @@ def create_csv(leaderboard_data, game_name, csv_fields):
                 if("player" in fieldnames):
                     writing_dictionary["player"] = []
                     for player_index in range(len(run["players"])):
-                        #OKAY IF THE PLAYER_INDEX IS GREATER THAN 1, THEN WE JUST APPEND OR WE CAN JUST APPEND THE NAME TO WHAT WE NEED TO WRITE
-
                         if "id" in run["players"][player_index]:
                             player_id = run["players"][player_index]["id"]
                             if(len(runs[0]["run"]["players"]) != 1):
@@ -362,6 +369,7 @@ def main():
         game_name = prompt_user()
         found_games = search_game(game_name)
     game_data = get_game(found_games)
+    international_game_name = get_international_game_name(game_data)
     game_id = get_game_id(game_data)
     game_category_data = get_game_category_data(game_id)
     category_id = get_category_id(game_category_data)
@@ -377,7 +385,7 @@ def main():
     else:
         variable_info = None
     category_leaderboard_data = get_category_leaderboard(game_id, category_id, variable_info)
-    extract_leaderboard_to_csv_or_json(category_leaderboard_data, game_name)
+    extract_leaderboard_to_csv_or_json(category_leaderboard_data, international_game_name)
 
 if __name__ == "__main__":
     main()
