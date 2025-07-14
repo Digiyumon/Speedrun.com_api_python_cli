@@ -19,13 +19,19 @@ A Python command-line application that lets you search for any game on Speedrun.
 
 📦 Example Usage
 
-$ python Speedrun_Data_Cli.py
-What game do you want to search for? Sonic Adventure 2
-1: Sonic Adventure 2
-2: Sonic Adventure 2: Battle
-Which game do you want info for? 2
-Would you like a copy of the json data to a file? (y/n) y
-...
+    $ python Speedrun_Data_Cli.py
+    
+    What game do you want to search for? Sonic Adventure 2
+    
+    1: Sonic Adventure 2
+
+    2: Sonic Adventure 2: Battle
+    
+    Which game do you want info for? 2
+    
+    Would you like a copy of the json data to a file? (y/n) y
+    
+    ...
 
 CSV output will include fields you select (e.g., real-time, in-game time, player name, etc.).
 🛠️ Tech Stack
