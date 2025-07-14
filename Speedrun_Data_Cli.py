@@ -65,6 +65,9 @@ def get_game_category_data(game_id):
 def get_category_id(category_data):
     return category_data['id']
 
+def get_category_name(category_data):
+    return category_data['name']
+
 def get_category_leaderboard(game_id, game_category, variable_info):
     has_variable_been_added = False
     if(variable_info == None):
@@ -286,7 +289,7 @@ def get_highest_place(leaderboard_data):
     places = [entry["place"] for entry in leaderboard_data["runs"]]
     return max(places)
 
-def create_csv(leaderboard_data, game_name, csv_fields):
+def create_csv(leaderboard_data, game_name, csv_fields, category_name):
     times_in_csv = []
     fieldnames = csv_fields
     if ('time' in fieldnames):
@@ -305,7 +308,7 @@ def create_csv(leaderboard_data, game_name, csv_fields):
 
     total_players = get_highest_place(leaderboard_data) * len(runs[0]["run"]["players"])
     current_player = 0
-    with open(f"{game_name}_leaderboard.csv", "w", newline="", encoding="utf-8") as csvfile:
+    with open(f"{game_name}_{category_name}_leaderboard.csv", "w", newline="", encoding="utf-8") as csvfile:
             existing_platforms = {}
             writing_dictionary = {}
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -340,9 +343,9 @@ def create_csv(leaderboard_data, game_name, csv_fields):
             print("CSV file has been created!")
             pass
 
-def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name):
+def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name, category_name):
     answer = 0
-    json_file_name = f"{game_name}_leaderboard"
+    json_file_name = f"{game_name}_{category_name}_leaderboard"
     while answer not in [1,2,3]:
         answer = int(input("Would you like the leaderboard extracted to a json or csv file? \n1. Json\n2. csv\n3. both\n"))
         if answer not in [1,2,3]:
@@ -351,12 +354,12 @@ def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name):
         dump_json_to_file(leaderboard_data, json_file_name)
     elif(answer == 2):
         csv_fields = choose_csv_fields()
-        create_csv(leaderboard_data, game_name, csv_fields)
+        create_csv(leaderboard_data, game_name, csv_fields,category_name)
         pass
     else:
         dump_json_to_file(leaderboard_data, json_file_name)
         csv_fields = choose_csv_fields()
-        create_csv(leaderboard_data, game_name, csv_fields)
+        create_csv(leaderboard_data, game_name, csv_fields,category_name)
         pass
 
 #TODO: whenever te user picks the name for the game, have the file that's saved, but the actual name of the game, not what they typed in to look up the game.
@@ -373,6 +376,7 @@ def main():
     game_id = get_game_id(game_data)
     game_category_data = get_game_category_data(game_id)
     category_id = get_category_id(game_category_data)
+    category_name = get_category_name(game_category_data)
     #if no variable id is chosen, then it just returns as None
     number_of_variables = get_number_of_variables(category_id)
     if(number_of_variables >= 1):
@@ -385,7 +389,7 @@ def main():
     else:
         variable_info = None
     category_leaderboard_data = get_category_leaderboard(game_id, category_id, variable_info)
-    extract_leaderboard_to_csv_or_json(category_leaderboard_data, international_game_name)
+    extract_leaderboard_to_csv_or_json(category_leaderboard_data, international_game_name, category_name)
 
 if __name__ == "__main__":
     main()
