@@ -19,7 +19,15 @@ def search_game(name):
 def get_game(game_data):
     for i, game in enumerate(game_data, start=1):
         print(f"{i}: {game['names']['international']}")
-    choice = int(input("Which game do you want info for? "))
+    while True:
+        try:
+            choice = int(input("Which game do you want info for? "))
+            if 1 <= choice <= len(game_data):
+                break
+            else:
+                print("Please enter a number from the list.")
+        except ValueError:
+            print("That's not a valid number. Try again.")
     json_answer = input("Would you like a copy of the json data to a file? (y/n) ")
     if json_answer.lower() == 'y':
         dump_json_to_file(game_data[choice-1], game_data[choice-1]['names']['international'])
@@ -49,16 +57,19 @@ def get_category_id(category_data):
     return category_data['id']
 
 def get_category_leaderboard(game_id, game_category, variable_info):
+    has_variable_been_added = False
     if(variable_info == None):
         leaderboard_data = requests.get(f"https://www.speedrun.com/api/v1/leaderboards/{game_id}/category/{game_category}")
     else:
         for i, variable in enumerate(variable_info):
-            variable_value = variable_info[i]['variable_value']
-            variable_id = variable_info[i]['variable_id']
-            if(i == 0):
-                request_string: str = f"https://www.speedrun.com/api/v1/leaderboards/{game_id}/category/{game_category}?var-{variable_id}={variable_value}"
-            else:
-                request_string += f"&var-{variable_id}={variable_value}"
+            if(variable_info[i]):
+                variable_value = variable_info[i]['variable_value']
+                variable_id = variable_info[i]['variable_id']
+                if(not has_variable_been_added):
+                    request_string: str = f"https://www.speedrun.com/api/v1/leaderboards/{game_id}/category/{game_category}?var-{variable_id}={variable_value}"
+                    has_variable_been_added = True
+                else:
+                    request_string += f"&var-{variable_id}={variable_value}"
         leaderboard_data = requests.get(request_string)
     return leaderboard_data.json()["data"]
 
@@ -76,28 +87,56 @@ def does_user_want_variables():
             return False
         else: return False
 
+def did_user_skip_all_variables(current_variable_info):
+    total_variable_count = len(current_variable_info)
+    total_skipped = 0
+    for i,variable in enumerate(current_variable_info):
+        if(not current_variable_info[i]):
+            total_skipped += 1
+    if(total_skipped == total_variable_count):
+        return True
+    else: return False
+
 def get_variable_info(category_id, total_number_of_variables):
+    import requests
+
     variables = requests.get(f"https://www.speedrun.com/api/v1/categories/{category_id}/variables")
     variables = variables.json()["data"]
     variable_info = {}
+
     for i in range(total_number_of_variables):
-        variable_choice = 0
         variable_labels = []
-        variable_info[i] = {}
         arr = []
+        variable_info[i] = {}
+
         variable_values = variables[i]['values']['values']
+
+        print(f"\nChoose a value for: {variables[i]['name']}")
         for idx, variable in enumerate(variable_values, start=1):
             print(f"{idx}: {variable_values[variable]['label']}")
             arr.append(idx)
             variable_labels.append(variable)
-        while variable_choice not in arr:
-            variable_choice = int(input("Which variable would you like to use?"))
-            if(variable_choice not in arr):
-                print("Just pick one of the valid options please...")
-        variable_label_choice = variable_labels[variable_choice-1]
+
+        print("0: Skip this variable")
+
+        variable_choice = -1
+        while variable_choice not in arr and variable_choice != 0:
+            try:
+                variable_choice = int(input("Your choice: "))
+                if variable_choice not in arr and variable_choice != 0:
+                    print("Please pick a valid option or type 0 to skip.")
+            except ValueError:
+                print("Enter a number, please.")
+
+        if variable_choice == 0:
+            continue  # Skip this variable
+
+        variable_label_choice = variable_labels[variable_choice - 1]
         variable_info[i]["variable_value"] = variable_label_choice
         variable_info[i]["variable_id"] = variables[i]['id']
+
     return variable_info
+
 
 
 def choose_csv_fields():
@@ -239,6 +278,7 @@ def get_highest_place(leaderboard_data):
     return max(places)
 
 def create_csv(leaderboard_data, game_name, csv_fields):
+    times_in_csv = []
     fieldnames = csv_fields
     if ('time' in fieldnames):
         times_to_ask = check_different_times(leaderboard_data)
@@ -246,7 +286,6 @@ def create_csv(leaderboard_data, game_name, csv_fields):
             print("What times would you like to have columns of?")
         times_in_csv = choose_time_fields(times_to_ask)
         fieldnames.remove("time")
-    print(repr(times_in_csv))
     if (len(times_in_csv) != 1):
         for time in times_in_csv:
             fieldnames.append(time)
@@ -255,7 +294,7 @@ def create_csv(leaderboard_data, game_name, csv_fields):
 
     runs = leaderboard_data["runs"]
 
-    total_players = get_highest_place(leaderboard_data)
+    total_players = get_highest_place(leaderboard_data) * len(runs[0]["run"]["players"])
     current_player = 0
     with open(f"{game_name}_leaderboard.csv", "w", newline="", encoding="utf-8") as csvfile:
             existing_platforms = {}
@@ -271,12 +310,19 @@ def create_csv(leaderboard_data, game_name, csv_fields):
                 if("InGame" in fieldnames):
                     writing_dictionary["InGame"] = run["times"]["ingame_t"]
                 if("player" in fieldnames):
-                    if "id" in run["players"][0]:
-                        player_id = run["players"][0]["id"]
-                        writing_dictionary["player"] = player_id_to_player_name(player_id, total_players, current_player)
-                    else:
-                        writing_dictionary["player"] = run["players"][0]["name"]
-                    current_player+=1
+                    writing_dictionary["player"] = []
+                    for player_index in range(len(run["players"])):
+                        #OKAY IF THE PLAYER_INDEX IS GREATER THAN 1, THEN WE JUST APPEND OR WE CAN JUST APPEND THE NAME TO WHAT WE NEED TO WRITE
+
+                        if "id" in run["players"][player_index]:
+                            player_id = run["players"][player_index]["id"]
+                            if(len(runs[0]["run"]["players"]) != 1):
+                                writing_dictionary["player"].append(player_id_to_player_name(player_id, total_players, current_player))
+                            else:
+                                writing_dictionary["player"] = player_id_to_player_name(player_id, total_players, current_player)
+                        else:
+                            writing_dictionary["player"] = run["players"][player_index]["name"]
+                        current_player+=1
                 if("date" in fieldnames):
                     writing_dictionary["date"] = run["date"]
                 if("platform" in fieldnames):
@@ -306,7 +352,7 @@ def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name):
         create_csv(leaderboard_data, game_name, csv_fields)
         pass
 
-
+#TODO: whenever te user picks the name for the game, have the file that's saved, but the actual name of the game, not what they typed in to look up the game.
 def main():
     variable_info = []
     game_name = prompt_user()
@@ -325,6 +371,8 @@ def main():
         variable_choice = does_user_want_variables()
         if(variable_choice):
             variable_info = get_variable_info(category_id, number_of_variables)
+            if(did_user_skip_all_variables(variable_info) == True):
+                variable_info = None
         else: variable_info = None
     else:
         variable_info = None
