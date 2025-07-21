@@ -2,8 +2,16 @@ import json
 import requests
 import csv
 import time
+from google.cloud import storage
+from dotenv import load_dotenv
+import os
+from pathlib import Path
 
+
+load_dotenv()
 notify_user_of_api_bottleneck = False
+csv_file_name = ""
+did_user_ask_for_csv = False
 
 def prompt_user():
     name = input("What game do you want to search for? ")
@@ -287,6 +295,7 @@ def get_highest_place(leaderboard_data):
     return max(places)
 
 def create_csv(leaderboard_data, game_name, csv_fields, category_name):
+    global csv_file_name
     times_in_csv = []
     fieldnames = csv_fields
     if ('time' in fieldnames):
@@ -338,10 +347,12 @@ def create_csv(leaderboard_data, game_name, csv_fields, category_name):
                         writing_dictionary["platform"] = f"emulated_{writing_dictionary["platform"]}"
                 writer.writerow(writing_dictionary)
             print("CSV file has been created!")
+            csv_file_name= f"{game_name}_{category_name}_leaderboard.csv"
             pass
 
 def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name, category_name):
     answer = 0
+    global did_user_ask_for_csv
     json_file_name = f"{game_name}_{category_name}_leaderboard"
     while answer not in [1,2,3]:
         answer = int(input("Would you like the leaderboard extracted to a json or csv file? \n1. Json\n2. csv\n3. both\n"))
@@ -350,16 +361,26 @@ def extract_leaderboard_to_csv_or_json(leaderboard_data, game_name, category_nam
     if(answer == 1):
         dump_json_to_file(leaderboard_data, json_file_name)
     elif(answer == 2):
+        did_user_ask_for_csv = True
         csv_fields = choose_csv_fields()
         create_csv(leaderboard_data, game_name, csv_fields,category_name)
         pass
     else:
+        did_user_ask_for_csv = True
         dump_json_to_file(leaderboard_data, json_file_name)
         csv_fields = choose_csv_fields()
         create_csv(leaderboard_data, game_name, csv_fields,category_name)
         pass
 
+def upload_to_gcs(bucket_name, source_file_path, destination_blob_name, key_path):
+    storage_client = storage.Client.from_service_account_json(key_path)
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_filename(source_file_path)
+    print(f"Uploaded {source_file_path} to {bucket_name}/{destination_blob_name}")
+
 def main():
+    key_path = os.getenv("KEY_PATH")
     variable_info = []
     game_name = prompt_user()
     found_games = search_game(game_name)
@@ -386,6 +407,20 @@ def main():
         variable_info = None
     category_leaderboard_data = get_category_leaderboard(game_id, category_id, variable_info)
     extract_leaderboard_to_csv_or_json(category_leaderboard_data, international_game_name, category_name)
+
+    
+
+    if key_path and did_user_ask_for_csv:
+        response = input("Do you want to upload the CSV to the bucket? (y/n)")
+        if response.lower() == 'y':
+            bucket_name = input("Input name for the bucket: \n")
+            blob_name = input("Input the destination blob name: \n")
+            upload_to_gcs(bucket_name, Path(csv_file_name), blob_name, key_path)
+            print("Uploading...")
+        else:
+            print("Skipping upload")
+    else:
+        print("KEY_PATH isn't set, if you want to upload to a google cloud bucket then please provide a path.")
 
 if __name__ == "__main__":
     main()
