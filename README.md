@@ -1,22 +1,59 @@
-🕹️ Speedrun.com Leaderboard Export Tool
+# Speedrun.com Data Export Tool
+A Python command-line application that lets you search for any game on Speedrun.com, view its categories, and export full leaderboard data to CSV or JSON — all without manually touching the API. You can export the necessary information such as player names, date, times and platform. 
 
-A Python command-line application that lets you search for any game on Speedrun.com, view its categories, and export full leaderboard data to CSV or JSON — all without manually touching the API.
+I created this because working with the API manually is an incredible hassle and I couldn't find anything that already accomplished what this program sets out to do. Instead of having to find the game id, then the specific category, along with the variables and put those into the url, you can just use this application to do all that for you. 
 
-🚀 Features
 
-    🔍 Search for games and select specific categories
+## Installation
 
-    📊 Export leaderboard data in .csv or .json format
+🚀 How to Use This Tool
 
-    ✅ Optional field selection (e.g., player name, time, date, platform)
+This script lets you quickly search for a game on speedrun.com, select a category, and export leaderboard data to CSV or JSON — no more digging through the API manually.
+📦 Step 1: Install Python
 
-    🧠 Automatically resolves player IDs to usernames
+If you don't have Python 3 installed, download it here:
+👉 https://www.python.org/downloads/
 
-    🔄 Handles subcategories, platform filters, and emulated runs
+Make sure to check “Add Python to PATH” during installation!
 
-    ⏱️ Built-in progress tracking and API rate limit awareness
+📁 Step 2: Download the Project
 
-    💥 Cuts manual data collection time by over 90%
+You can either:
+
+    Click the green Code button on GitHub → Download ZIP
+    Then extract the folder.
+
+OR
+
+    Use Git:
+
+    git clone https://github.com/yourusername/speedrun-data-exporter.git
+    cd speedrun-data-exporter
+
+🔧 Step 3: Install Required Packages
+
+In your terminal or command prompt, navigate to the project folder and run:
+    
+    pip install -r requirements.txt
+    
+This installs the requests library used for API access.
+🏁 Step 4: Run the Program
+
+Once everything’s installed, run:
+
+python Speedrun_Data_Cli.py
+
+Follow the on-screen prompts to:
+
+Search for a game
+
+Select categories and subcategories
+
+Choose what data to export
+
+Output to a .csv or .json file
+    
+## Usage/Examples
 
 📦 Example Usage
 
@@ -33,33 +70,8 @@ A Python command-line application that lets you search for any game on Speedrun.
     Would you like a copy of the json data to a file? (y/n) y
     
     ...
+## Lessons Learned
 
-CSV output will include fields you select (e.g., real-time, in-game time, player name, etc.).
-🛠️ Tech Stack
-
-    Python 3
-
-    requests
-
-    json
-
-    csv
-
-📁 Output
-
-    {game_name}_data.json — base game info (optional)
-
-    {category_name}_leaderboard.csv — leaderboard export
-
-    Automatically named for clarity and organization
-
-💡 Future Plans
-
-    GUI with Tkinter or PyQT
-
-    Batch game/category export
-
-
-🧠 Why This?
-
-Working with the Speedrun.com API by hand is tedious. This tool turns a 15–20 minute multi-query process into a simple 30-second CLI interaction — ideal for speedrun analysts, game researchers, and hobbyist devs.
+Learned a lot about how to use requests from an API and the data that comes along with it. How to traverse the data and ensure that I'm getting the data that I need. Also about file formatting and how to export necessary data to the file types that are requested. 
+## Roadmap
+Not much really, I was thinking about making a gui for this, but it's not that serious. Just fixing any bugs that are requested if this becomes popular enough. Other than that, i'm kinda done with it. 
