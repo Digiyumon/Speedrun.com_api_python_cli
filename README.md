@@ -1,77 +1,56 @@
 # Speedrun.com Data Export Tool
-A Python command-line application that lets you search for any game on Speedrun.com, view its categories, and export full leaderboard data to CSV or JSON — all without manually touching the API. You can export key information such as player names, dates, times, and platform. If provided with a key.json file, the app can also upload the exported data directly to a Google Cloud Storage bucket.
 
-I created this because working with the API manually is an incredible hassle and I couldn't find anything that already accomplished what this program sets out to do. Instead of needing to locate game IDs, categories, and variable parameters for a URL, you can use this tool to handle everything for you automatically.
+A CLI application for searching games on Speedrun.com, selecting categories, and exporting full leaderboard data to CSV or JSON. 
 
+Working with the Speedrun.com API manually requires looking up game IDs, category keys, and variable parameters. This tool automates those steps through interactive prompts. It exports player names, run dates, times, and platform data, and can optionally upload exports directly to a Google Cloud Storage bucket if a `key.json` file is provided.
 
 ## Installation
 
-🚀 How to Use This Tool
+### Prerequisites
+* Python 3.8 or higher installed on your system.
 
-This script lets you quickly search for a game on speedrun.com, select a category, and export leaderboard data to CSV or JSON — no more digging through the API manually.
-📦 Step 1: Install Python
+### Setup
 
-If you don't have Python 3 installed, download it here:
-👉 https://www.python.org/downloads/
+1. **Clone the repository:**
+   git clone [https://github.com/Digiyumon/speedrun-data-exporter.git](https://github.com/Digiyumon/speedrun-data-exporter.git)
+   cd speedrun-data-exporter
+   Create and activate a virtual environment:
+    Linux/macOS:
+    python3 -m venv venv
+    source venv/bin/activate
 
-Make sure to check “Add Python to PATH” during installation!
+    Windows (Command Prompt):
+    python -m venv venv
+    venv\Scripts\activate
+   
+    Windows (PowerShell):
+    python -m venv venv
+    .\venv\Scripts\Activate.ps1
 
-📁 Step 2: Download the Project
+2. **Install dependencies:**
+pip install -r requirements.txt
 
-You can either:
+Run the script from your terminal:
+"python Speedrun_Data_Cli.py"
 
-    Click the green Code button on GitHub → Download ZIP
-    Then extract the folder.
+Follow the prompts to:
 
-OR
+Search for a game title.
 
-    Use Git:
+Select a game and category from the search results.
 
-    git clone https://github.com/yourusername/speedrun-data-exporter.git
-    cd speedrun-data-exporter
+Choose your desired output format (.csv or .json).
 
-🔧 Step 3: Install Required Packages
+(Optional) Provide Google Cloud Storage credentials to upload the exported file.
 
-In your terminal or command prompt, navigate to the project folder and run:
-    
-    pip install -r requirements.txt
-    
-This installs the requests library used for API access.
-🏁 Step 4: Run the Program
+Example:
+$ python Speedrun_Data_Cli.py
 
-Once everything’s installed, run:
+What game do you want to search for? Sonic Adventure 2
 
-python Speedrun_Data_Cli.py
+1: Sonic Adventure 2
+2: Sonic Adventure 2: Battle
 
-Follow the on-screen prompts to:
+Which game do you want info for? 2
 
-Search for a game
-
-Select categories and subcategories
-
-Choose what data to export
-
-Output to a .csv or .json file
-    
-## Usage/Examples
-
-📦 Example Usage
-
-    $ python Speedrun_Data_Cli.py
-    
-    What game do you want to search for? Sonic Adventure 2
-    
-    1: Sonic Adventure 2
-
-    2: Sonic Adventure 2: Battle
-    
-    Which game do you want info for? 2
-    
-    Would you like a copy of the json data to a file? (y/n) y
-    
-    ...
-## Lessons Learned
-
-Learned a lot about how to use requests from an API and the data that comes along with it. How to traverse the data and ensure that I'm getting the data that I need. Also about file formatting and how to export necessary data to the file types that are requested. 
-## Roadmap
-Not much really, I was thinking about making a gui for this, but it's not that serious. Just fixing any bugs that are requested if this becomes popular enough. Other than that, i'm kinda done with it. 
+Would you like a copy of the json data to a file? (y/n) y
