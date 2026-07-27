@@ -15,6 +15,7 @@ Working with the Speedrun.com API manually requires looking up game IDs, categor
    git clone [https://github.com/Digiyumon/speedrun-data-exporter.git](https://github.com/Digiyumon/speedrun-data-exporter.git)
    cd speedrun-data-exporter
    Create and activate a virtual environment:
+    
     Linux/macOS:
     python3 -m venv venv
     source venv/bin/activate
