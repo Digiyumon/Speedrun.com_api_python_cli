@@ -15,15 +15,16 @@ Working with the Speedrun.com API manually requires looking up game IDs, categor
    git clone [https://github.com/Digiyumon/speedrun-data-exporter.git](https://github.com/Digiyumon/speedrun-data-exporter.git)
    cd speedrun-data-exporter
    Create and activate a virtual environment:
-    Linux/macOS:
+    
+   - Linux/macOS:
     python3 -m venv venv
     source venv/bin/activate
 
-    Windows (Command Prompt):
+   - Windows (Command Prompt):
     python -m venv venv
     venv\Scripts\activate
    
-    Windows (PowerShell):
+   - Windows (PowerShell):
     python -m venv venv
     .\venv\Scripts\Activate.ps1
 
@@ -35,13 +36,13 @@ Run the script from your terminal:
 
 Follow the prompts to:
 
-Search for a game title.
+1. Search for a game title.
 
-Select a game and category from the search results.
+2. Select a game and category from the search results.
 
-Choose your desired output format (.csv or .json).
+3. Choose your desired output format (.csv or .json).
 
-(Optional) Provide Google Cloud Storage credentials to upload the exported file.
+4. (Optional) Provide Google Cloud Storage credentials to upload the exported file.
 
 Example:
 $ python Speedrun_Data_Cli.py
