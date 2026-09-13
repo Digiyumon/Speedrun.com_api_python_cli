@@ -1,3 +1,4 @@
 requests
 google-cloud-storage
 dotenv
+google.cloud

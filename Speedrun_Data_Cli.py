@@ -275,6 +275,11 @@ def print_progress_bar(current, total, length=40):
     bar = '█' * filled + '-' * (length - filled)
     print(f"\rFetching player names... |{bar}| {int(percent * 100)}% ({current}/{total})", end='', flush=True)
 
+def loading_animation(iteration, total):
+    frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    frame = frames[iteration % len(frames)]
+    print(f'\rProcessing run {iteration}/{total} {frame}', end='', flush=True)
+
 def player_id_to_player_name(player_id, total_players,current_player):
     global notify_user_of_api_bottleneck
     # Simulate a loading dot animation
@@ -346,7 +351,8 @@ def create_csv(leaderboard_data, game_name, csv_fields, category_name):
                     if (run["system"]["emulated"] == True):
                         writing_dictionary["platform"] = f"emulated_{writing_dictionary["platform"]}"
                 writer.writerow(writing_dictionary)
-            print("CSV file has been created!")
+                loading_animation(i, len(runs))
+            print('\r' + ' ' * 60 + '\rCSV file has been created!')
             csv_file_name= f"{game_name}_{category_name}_leaderboard.csv"
             pass
 
