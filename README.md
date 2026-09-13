@@ -1,3 +1,9 @@
+
+
+https://github.com/user-attachments/assets/e7783eea-c28e-4877-9b19-cd2eb743cea6
+
+
+
 # Speedrun.com Data Export Tool
 
 A CLI application for searching games on Speedrun.com, selecting categories, and exporting full leaderboard data to CSV or JSON. 
